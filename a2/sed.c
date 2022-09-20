@@ -44,7 +44,6 @@ void replaceWord(const char* s, const char* oldW, const char* newW)
 }
 
 
-
 // fix args
 int main(int argc, char *argv[])
 {
