@@ -1,97 +1,149 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
-#define BUF_LEN 100
-#define ARR_LEN 99172
+#define BUF_LEN 150
 
-int pstrcmp( const void* a, const void* b )
+char commands[8][15] = {"cat", "head", "tail", "ls", "sort", "grep", "sed"};
+static char welcome[1134] = "⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀\n⡇   Matias Cinera - U 6931_8506    ⢰\n⡇   COP 6611                       ⢰\n⡇   Instructor: Dr. Ankur Mali     ⢸\n⡇   Assigment 2 - Part 1           ⢸\n⣇⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣠\n⠉⠉⠉⠉⠉⣽⠏⣽⡿⣻⣿⣯⡍⣉⠉⣉⣽⠿⠿⠿⡫⣷⣩⣭⣍⠺⣏⠉⠉⠉⠁\n⠀⠀⠀⠀⠀⡟⢰⣿⠗⣉⠤⠄⠈⠽⢿⣩⠤⢒⡶⠖⣚⣛⣛⣟⣿⣆⢱⡄⠀⠀⠀\n⠀⠀⠀⠀⠀⡇⢸⡇⠘⠁⢀⡤⡲⡿⣿⣖⠒⢥⠔⢫⣿⣟⣷⠈⢻⡾⢸⡇⠀⠀⠀\n⠀⠀⠀⠀⠀⡇⠸⡇⠐⠒⢵⡊⠀⣷⣻⣾⣧⠾⠤⠬⠿⠛⢛⣿⣿⡇⢸⡇⠀⠀⠀\n⠀⠀⠀⠀⠀⡇⠀⣧⢠⠔⢒⣚⠛⠯⠭⠤⠤⠤⠤⠖⣒⣊⡭⢴⣿⠃⢸⡇⠀⠀⠀\n⠀⠀⠀⠀⠀⣇⠀⢿⡈⠑⠲⠭⠭⢭⣉⣉⣉⣉⡭⠭⠭⠴⢖⡟⠁⣀⡾⠃⠀⠀⠀\n⠀⠀⠀⠀⠀⢿⡄⠈⢻⡶⢤⣀⣀⣀⣀⣀⣀⣀⣀⣤⠴⠚⠋⣷⡞⠋⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⢈⣿⣦⣰⠇⠀⠀⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣂⠀⠀⠀⠀⠀";
+
+char test_args[3][BUF_LEN] = {"ONE", "TWO", "THREE"};   // testing delete later!
+static char args[50][BUF_LEN];
+
+int main()
 {
-  return strcmp( *(const char**)a, *(const char**)b );
-}
-
-int main(int argc, char *argv[])
-{
-    int param_size = argc - 1;
-    FILE *fptr;
     char buf[BUF_LEN];
-    static char lines[ARR_LEN][BUF_LEN];    // allocated in memory segment not in stack segment
-    int i, j, idx = 0;
-
-    fptr = fopen(argv[1], "r");
-    if (fptr == NULL)
-    {
-        printf("Cannot open file \n");
-        exit(0);
-    }
     
-    while(fgets(buf, BUF_LEN, fptr)) 
+    system("clear");    
+    printf("%s", welcome);
+
+    while(1)
     {
-        strncpy(lines[idx], buf, BUF_LEN);
-        idx++;
-    }
-    fclose(fptr);
-
-    size_t n = sizeof(lines) / sizeof(lines[0]);
-    // qsort(lines, n, sizeof(lines[0]), pstrcmp);
-
-    for(i=0; lines[i][0]!= '\0'; i++) printf("%s", lines[i]);
-
-    return 0;
-}
-
-
-// function to swap elements
-void swap(int *a, int *b) {
-  int t = *a;
-  *a = *b;
-  *b = t;
-}
-
-// function to find the partition position
-int partition(int array[], int low, int high) {
-  
-  // select the rightmost element as pivot
-  int pivot = array[high];
-  
-  // pointer for greater element
-  int i = (low - 1);
-
-  // traverse each element of the array
-  // compare them with the pivot
-  for (int j = low; j < high; j++) {
-    if (array[j] <= pivot) {
+        printf("\n$ ");
         
-      // if element smaller than pivot is found
-      // swap it with the greater element pointed by i
-      i++;
-      
-      // swap element at i with element at j
-      swap(&array[i], &array[j]);
+        // get std line
+        char *input = NULL;
+        size_t size;
+        
+        if (getline(&input, &size, stdin) == -1) 
+            continue; // no line
+        
+        // continue if its a new line
+        if(input[0]=='\n') // just a new input
+            continue;
+        
+        int i;
+        memset(buf, 0, BUF_LEN);
+        for(i=0; input[i] != '\0'; i++)
+        {
+            if(input[i] == ' ' || input[i] == '\n') break;
+            buf[i] = input[i];
+        }
+        buf[i] = '\0';
+
+        char exec[154] = "./";
+        strcat(exec, input);
+        
+
+        int flag = 0;
+        if(strcmp(buf, "exit") == 0) exit(1);
+        else if(strcmp(buf, "clear") == 0) system("clear"); // allow clear for debugging purpuses
+        else
+        {
+            for(i=0; i<7; i++)  // check if the command is allowed
+            {
+                if(strcmp(buf, commands[i]) == 0)
+                {
+                    flag=1;
+                    break;
+                }
+            }
+
+        }
+
+        if(flag)
+        {
+            system(exec);
+        }
+        else
+        {
+            printf("Command '%s' not supported", buf);
+        }
+        
+        for(int i = 0; i<3; i++)
+        {
+            int fd1[2]; // Used to store two ends of first pipe
+            // int fd2[2]; // Used to store two ends of second pipe
+
+            if (pipe(fd1) == -1) 
+            {
+                fprintf(stderr, "Pipe Failed");
+                return 1;
+            }
+            // if (pipe(fd2) == -1) 
+            // {
+            //     fprintf(stderr, "Pipe Failed");
+            //     return 1;
+            // }
+            
+            pid_t p = fork();
+
+            if (p < 0) 
+            {
+                fprintf(stderr, "fork Failed");
+                return 1;
+            }
+            else if (p > 0) { // Parent process
+
+                if(!flag) break;    // if there is an invalid command
+
+                char concat_str[100];
+
+                close(fd1[0]); // Close reading end of first pipe
+
+                // Write input string and close writing end of first pipe.
+                // printf("parent %s\n", exec);
+                write(fd1[1], test_args[i], strlen(test_args[i]) + 1);
+                close(fd1[1]);
+
+                // Wait for child to send a string
+                wait(NULL);
+
+                // close(fd2[1]); // Close writing end of second pipe
+
+                // // Read string from child, print it and close
+                // // reading end.
+                // read(fd2[0], concat_str, 100);
+                
+                // close(fd2[0]);
+            }
+
+            // child process
+            else {
+                close(fd1[1]); // Close writing end of first pipe
+
+                // Read a string using first pipe
+                char concat_str[100];
+
+                read(fd1[0], concat_str, 100);
+                printf("child %s\n", concat_str);
+
+                // Close both reading ends
+                close(fd1[0]);
+                // close(fd2[0]);
+
+                // // Write concatenated string and close writing end
+                // write(fd2[1], concat_str, strlen(concat_str) + 1);
+                // close(fd2[1]);
+
+                exit(0);
+            }
+        }
+        free(input);
     }
-  }
 
-  // swap the pivot element with the greater element at i
-  swap(&array[i + 1], &array[high]);
-  
-  // return the partition point
-  return (i + 1);
-}
-
-void quickSort(int array[], int low, int high) {
-  if (low < high) {
-    
-    // find the pivot element such that
-    // elements smaller than pivot are on left of pivot
-    // elements greater than pivot are on right of pivot
-    int pi = partition(array, low, high);
-    
-    // recursive call on the left of pivot
-    quickSort(array, low, pi - 1);
-    
-    // recursive call on the right of pivot
-    quickSort(array, pi + 1, high);
-  }
+    return 1;
 }
