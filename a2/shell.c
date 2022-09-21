@@ -16,25 +16,26 @@ static char args[50][BUF_LEN];
 int main()
 {
     char buf[BUF_LEN];
-    
     system("clear");    
-    printf("%s", welcome);
+    printf("%s\n$ ", welcome);
 
     while(1)
     {
-        printf("\n$ ");
-        
         // get std line
         char *input = NULL;
         size_t size;
         
         if (getline(&input, &size, stdin) == -1) 
-            continue; // no line
+            continue; // error
         
         // continue if its a new line
         if(input[0]=='\n') // just a new input
+        {
+            printf("$ ");
             continue;
+        }
         
+        // scan the 1st commmand
         int i;
         memset(buf, 0, BUF_LEN);
         for(i=0; input[i] != '\0'; i++)
@@ -45,16 +46,17 @@ int main()
         buf[i] = '\0';
         
         int flag = 0;
-        if(strcmp(buf, "exit") == 0) 
-            exit(1);
+        if(strcmp(buf, "exit") == 0) // exit program
+            break;
         else if(strcmp(buf, "clear") == 0)
         {
             system("clear"); // allow clear for debugging purpuses
+            printf("$ ");
             continue;
         } 
         else
         {
-            for(i=0; i<7; i++)  // check if the command is allowed
+            for(i=0; i<7; i++)  // check if the command is valid
             {
                 if(strcmp(buf, commands[i]) == 0)
                 {
@@ -63,18 +65,47 @@ int main()
                 }
             }
         }
-        
+
+        if(!flag)   // get new line if command is invalid
+        {
+            printf("Command '%s' not supported\n$ ", buf);
+            continue;
+        }
+
+        // clear args before storing them
+        memset(args, 0, sizeof(args[0][0]) * 50 * BUF_LEN);
+        int count = 0;
+        int idx = 0;
+        for(i=0; input[i] != '\0'; i++)
+        {
+            if(input[i] == '|' || input[i] == '-')
+            {
+                args[idx][count+1] = '\0';
+                count=0;
+                idx++;
+                continue;
+            }
+            // if first index is a space
+            if(count == 0)
+            {
+                if(input[i] == ' ')
+                    continue;
+            }
+
+            args[idx][count] = input[i];
+            count++;
+        }
+        args[idx][count+1] = '\0';
+
         char exec[154] = "./";
-        strcat(exec, input);
-        if(flag)
-        {
-            system(exec);
-        }
-        else
-        {
-            printf("Command '%s' not supported", buf);
-        }
-        for(int i = 0; i<3; i++)
+        strcat(exec, args[0]);
+        
+        printf("\n$ ");
+        system(exec);
+
+        if(idx == 0) continue; // only one command to execute
+
+        for(i = 1; i<=idx; i++)
         {
             int fd1[2]; // Used to store two ends of first pipe
 
@@ -93,22 +124,20 @@ int main()
             }
             else if (p > 0) { // Parent process
 
-                if(!flag) break;    // if there is an invalid command
-
+                if(!flag) break;    // teachnically not needed, could possibly avoid bugs
                 char concat_str[100];
 
                 close(fd1[0]); // Close reading end of first pipe
 
                 // Write input string and close writing end of first pipe.
-                write(fd1[1], test_args[i], strlen(test_args[i]) + 1);
+                write(fd1[1], args[i], strlen(args[i]) + 1);
                 close(fd1[1]);
 
                 // Wait for child to send a string
                 wait(NULL);
             }
-
-            // child process
-            else {
+            else // child process
+            {
                 close(fd1[1]); // Close writing end of first pipe
 
                 // Read a string using first pipe
@@ -125,6 +154,6 @@ int main()
         }
         free(input);
     }
-
-    return 1;
+    system("clear");
+    return 0;
 }
