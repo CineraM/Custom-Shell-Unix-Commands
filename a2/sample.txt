@@ -1,0 +1,8 @@
+NOTE: we have stopped maintaining the x86 version of XDDD, and switched
+(https://github.com/mit-pdos/XDDD-riscv.git)
+XDDD is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
+Version 6 (v6).  XDDD loosely follows the structure and style of v6,
+XDDD is inspired by John Lions's Commentary on UNIX 6th Edition (Peer
+XDDD borrows code from the following sources:
+The code in the files that constitute XDDD is
+To build XDDD on an x86 ELF machine (like Linux or FreeBSD), run

@@ -10,8 +10,10 @@
 char commands[8][15] = {"cat", "head", "tail", "ls", "sort", "grep", "sed"};
 static char welcome[1134] = "⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀\n⡇   Matias Cinera - U 6931_8506    ⢰\n⡇   COP 6611                       ⢰\n⡇   Instructor: Dr. Ankur Mali     ⢸\n⡇   Assigment 2 - Part 1           ⢸\n⣇⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣠\n⠉⠉⠉⠉⠉⣽⠏⣽⡿⣻⣿⣯⡍⣉⠉⣉⣽⠿⠿⠿⡫⣷⣩⣭⣍⠺⣏⠉⠉⠉⠁\n⠀⠀⠀⠀⠀⡟⢰⣿⠗⣉⠤⠄⠈⠽⢿⣩⠤⢒⡶⠖⣚⣛⣛⣟⣿⣆⢱⡄⠀⠀⠀\n⠀⠀⠀⠀⠀⡇⢸⡇⠘⠁⢀⡤⡲⡿⣿⣖⠒⢥⠔⢫⣿⣟⣷⠈⢻⡾⢸⡇⠀⠀⠀\n⠀⠀⠀⠀⠀⡇⠸⡇⠐⠒⢵⡊⠀⣷⣻⣾⣧⠾⠤⠬⠿⠛⢛⣿⣿⡇⢸⡇⠀⠀⠀\n⠀⠀⠀⠀⠀⡇⠀⣧⢠⠔⢒⣚⠛⠯⠭⠤⠤⠤⠤⠖⣒⣊⡭⢴⣿⠃⢸⡇⠀⠀⠀\n⠀⠀⠀⠀⠀⣇⠀⢿⡈⠑⠲⠭⠭⢭⣉⣉⣉⣉⡭⠭⠭⠴⢖⡟⠁⣀⡾⠃⠀⠀⠀\n⠀⠀⠀⠀⠀⢿⡄⠈⢻⡶⢤⣀⣀⣀⣀⣀⣀⣀⣀⣤⠴⠚⠋⣷⡞⠋⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⢈⣿⣦⣰⠇⠀⠀⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣂⠀⠀⠀⠀⠀";
 
-char test_args[3][BUF_LEN] = {"ONE", "TWO", "THREE"};   // testing delete later!
 static char args[50][BUF_LEN];
+static char extract[5][BUF_LEN];
+
+char file_name[30];
 
 int main()
 {
@@ -19,6 +21,7 @@ int main()
     system("clear");    
     printf("%s\n$ ", welcome);
 
+    // active loop for input
     while(1)
     {
         // get std line
@@ -61,7 +64,7 @@ int main()
                 if(strcmp(buf, commands[i]) == 0)
                 {
                     flag=1;
-                    break;
+                    break;  
                 }
             }
         }
@@ -91,6 +94,7 @@ int main()
                 if(input[i] == ' ')
                     continue;
             }
+            if(input[i] == '\n') continue;
 
             args[idx][count] = input[i];
             count++;
@@ -99,11 +103,22 @@ int main()
 
         char exec[154] = "./";
         strcat(exec, args[0]);
-        
-        printf("\n$ ");
-        system(exec);
 
-        if(idx == 0) continue; // only one command to execute
+        if(idx == 0)
+        {
+            printf("\n$ ");
+            system(exec);
+            continue; // only one command to execute
+        }
+        else
+        {
+            // clear both buffers
+            remove("buffer_file2.txt");
+            remove("buffer_file.txt");
+            char out[30] = "> buffer_file.txt";
+            strcat(exec, out);
+            system(exec);
+        }
 
         for(i = 1; i<=idx; i++)
         {
@@ -140,19 +155,58 @@ int main()
             {
                 close(fd1[1]); // Close writing end of first pipe
 
+                char exec[200] = "./";
+                char read_file[30];
+                char write_file[30];
+                
+                if(access("buffer_file.txt", F_OK) == 0)    // file exists
+                {
+                    strcpy(read_file, "buffer_file.txt");
+                    strcpy(write_file, "buffer_file2.txt"); 
+                }
+                else
+                {
+                    strcpy(read_file, "buffer_file2.txt");
+                    strcpy(write_file, "buffer_file.txt"); 
+                }
+
                 // Read a string using first pipe
-                char concat_str[100];
+                char command[100];
+                read(fd1[0], command, 100);// read the command from pipe
 
-                read(fd1[0], concat_str, 100);
-                printf("child %s\n", concat_str);
+                int i, flag = 0;
+                for(i=0; command[i]!='\0'; i++)
+                {
+                    if(command[i] == '>')
+                    {
+                        flag=1;
+                        break;
+                    }
+                }
+                if(flag)
+                {
+                    strcat(exec, command);     // append the command
+                    strcat(exec, " ");
+                    strcat(exec, read_file);  // append write file
+                }
+                else
+                {
+                    strcat(exec, command);     // append the command
+                    strcat(exec, " ");
+                    strcat(exec, read_file);  // append write file
+                    strcat(exec, " >");
+                    strcat(exec, write_file);  // append write 
+                }
 
+                system(exec);
+                remove(read_file);
                 // Close both reading ends
                 close(fd1[0]);
-
                 exit(0);
             }
         }
         free(input);
+        printf("$ ");
     }
     system("clear");
     return 0;

@@ -2,12 +2,14 @@
 #include <stdio.h> 
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define FILE_LEN 20
 #define ARR_LEN 99172
 
 int main(int argc, char *argv[]) 
 {
+    int param_size = argc - 1;
 
     DIR *d;
     struct dirent *dir;
@@ -52,7 +54,45 @@ int main(int argc, char *argv[])
         }
     }
 
-    for(i=0; i<idx; i++) printf("%s  ", files[i]);
+    // ls < test a
+    if(param_size == 3)
+    {
+
+        if(strcmp(argv[3], "d") == 0)
+        {
+            if (access(argv[2], F_OK) == 0) 
+            {
+                if(remove(argv[2]) == 0) printf("deteled");
+            }
+        }
+
+        FILE * fPtr;
+        fPtr = fopen(argv[2], "w");
+
+        if(fPtr == NULL)
+        {
+            printf("Unable to create file.\n");
+            exit(EXIT_FAILURE);
+        }
+        
+        char space[6] = "\n";
+        for(i=0; i<idx; i++)
+        {
+            fputs(files[i], fPtr);
+            fputs(space, fPtr);
+        }
+
+        fclose(fPtr);
+    }
+    else if(param_size == 0)
+    {
+        for(i=0; i<idx; i++) printf("%s  ", files[i]);
+        printf("\n");
+    }
+    else
+    {
+        printf("Error: wrong args \n");
+    }
     
     return(0);
 }
