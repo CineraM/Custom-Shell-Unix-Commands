@@ -1,4 +1,4 @@
-# C Custom Shell & Unix Commands
+# C - Custom Shell & Unix Commands
 
 Unix commands implemented: cat, grep, head, ls, mkdir, sed, sort, and tail  
 
